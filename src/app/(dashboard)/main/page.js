@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Filter, Plus, X, Edit, Trash } from "lucide-react";
+import Saleone from "../components/saleone";
+import Saletwo from "../components/saletwo";
 
 // Inline Button Component
 const Button = ({ children, variant = "default", ...props }) => {
@@ -15,6 +17,7 @@ const Button = ({ children, variant = "default", ...props }) => {
     <button className={`${baseStyles} ${variants[variant]}`} {...props}>
       {children}
     </button>
+    
   );
 };
 
@@ -97,16 +100,22 @@ export default function Products() {
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
 
   return (
-    <div className="text-black flex flex-col items-start p-6 h-[550px]">
+    <div className="text-black flex flex-col items-center p-6 mt-80 bg-white w-full">
       {/* Welcome Back Message */}
       <div>
   <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
   <h1 className="text-2xl ml-5.5 top-2.5 font-bold mb-4 mt-5">Welcome back, Admin!</h1>
+
+ 
+<Saleone/>
+<Saletwo/>
+
 </div>
+
 
       
       {/* Product List */}
-      <main className="p-6 flex-1 overflow-auto w-full">
+      <main className="p-6 flex-1 overflow-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-black">Product List</h2>
 
@@ -130,16 +139,17 @@ export default function Products() {
         </div>
 
         {/* Product Table */}
-        <table className="w-[900px] bg-white border border-gray-200 shadow-md rounded-lg overflow-hidden">
+        <table className="w-[950px] bg-white border border-gray-200 shadow-md rounded-lg overflow-hidden">
   <thead>
     <tr className="bg-gray-200">
       <th className="px-4 py-2">Product Name</th>
       <th className="px-4 py-2">Price</th>
       <th className="px-4 py-2">Category</th>
       <th className="px-4 py-2">Subcategory</th>
-      <th className="px-4 py-2">Actions</th> {/* Added this */}
+      <th className="px-4 py-2">Actions</th>
     </tr>
   </thead>
+
   <tbody>
     {products.map((product) => (
       <tr key={product.id} className="border-t border-gray-200 hover:bg-gray-50">
@@ -147,7 +157,7 @@ export default function Products() {
         <td className="px-4 py-2">{product.price}</td>
         <td className="px-4 py-2">{product.category}</td>
         <td className="px-4 py-2">{product.subcategory}</td>
-        <td className="px-4 py-2 flex space-x-2"> {/* Actions column */}
+        <td className="px-4 py-2 flex space-x-2">
           <button onClick={() => handleEdit(product)} className="text-blue-500 hover:text-blue-700">
             <Edit className="w-5 h-5" />
           </button>
@@ -159,6 +169,7 @@ export default function Products() {
     ))}
   </tbody>
 </table>
+
 
       </main>
       
