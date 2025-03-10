@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./../../../../script/firebaseConfig";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function AuthForm() {
@@ -11,13 +14,43 @@ export default function AuthForm() {
     password: "",
   });
 
+  const [error, setError] = useState(null);
+  const router = useRouter();
+
+  // useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
+  //     if (user) {
+  //       router.push("/main"); // Redirect after successful login
+  //     }
+  //   });
+  //   return () => unsubscribe();
+  // }, [router]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      if (isSignUp) {
+        // Sign-up process
+        await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      } else {
+        // Sign-in process
+        await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      }
+      router.push("/main"); // Redirect after successful login
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-200">
-      <div className="relative w-[700px] h-[450px] bg-white rounded-lg overflow-hidden shadow-xl flex">
+    <div className="flex flex-col items-center justify-center h-screen bg-gray-200 overflow-hidden pt-0">
+      <div className="relative w-[600px] h-[400px] bg-white rounded-lg overflow-hidden shadow-xl flex">
         {/* Form Section */}
         <motion.div
           initial={{ x: 0 }}
@@ -34,9 +67,9 @@ export default function AuthForm() {
             className="w-full flex flex-col items-center justify-center"
           >
             {isSignUp ? (
-              <SignUpForm formData={formData} handleChange={handleChange} />
+              <SignUpForm formData={formData} handleChange={handleChange} handleSubmit={handleSubmit} error={error} />
             ) : (
-              <SignInForm formData={formData} handleChange={handleChange} />
+              <SignInForm formData={formData} handleChange={handleChange} handleSubmit={handleSubmit} error={error} />
             )}
           </motion.div>
         </motion.div>
@@ -69,64 +102,75 @@ export default function AuthForm() {
   );
 }
 
-function SignInForm({ formData, handleChange }) {
+function SignInForm({ formData, handleChange, handleSubmit, error }) {
   return (
     <div className="flex flex-col items-center">
       <h2 className="text-xl font-semibold mb-4">Sign In</h2>
-      <input
-        type="email"
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-        placeholder="Email Address"
-        className="mb-3 p-2 border rounded w-56"
-      />
-      <input
-        type="password"
-        name="password"
-        value={formData.password}
-        onChange={handleChange}
-        placeholder="Password"
-        className="mb-3 p-2 border rounded w-56"
-      />
-      <button className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">
-        Sign In
-      </button>
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+      <form onSubmit={handleSubmit} className="flex flex-col items-center">
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email Address"
+          className="mb-3 p-2 border rounded w-56"
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder="Password"
+          className="mb-3 p-2 border rounded w-56"
+          required
+        />
+        <button type="submit" className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">
+          Sign In
+        </button>
+      </form>
     </div>
   );
 }
 
-function SignUpForm({ formData, handleChange }) {
+function SignUpForm({ formData, handleChange, handleSubmit, error }) {
   return (
     <div className="flex flex-col items-center">
       <h2 className="text-xl font-semibold mb-4">Sign Up</h2>
-      <input
-        type="text"
-        name="fullName"
-        value={formData.fullName}
-        onChange={handleChange}
-        placeholder="Full Name"
-        className="mb-3 p-2 border rounded w-56"
-      />
-      <input
-        type="email"
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-        placeholder="Email Address"
-        className="mb-3 p-2 border rounded w-56"
-      />
-      <input
-        type="password"
-        name="password"
-        value={formData.password}
-        onChange={handleChange}
-        placeholder="Password"
-        className="mb-3 p-2 border rounded w-56"
-      />
-      <button className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">
-        Sign Up
-      </button>
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+      <form onSubmit={handleSubmit} className="flex flex-col items-center">
+        <input
+          type="text"
+          name="fullName"
+          value={formData.fullName}
+          onChange={handleChange}
+          placeholder="Full Name"
+          className="mb-3 p-2 border rounded w-56"
+          required
+        />
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email Address"
+          className="mb-3 p-2 border rounded w-56"
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder="Password"
+          className="mb-3 p-2 border rounded w-56"
+          required
+        />
+        <button type="submit" className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">
+          Sign Up
+        </button>
+      </form>
     </div>
   );
 }
