@@ -24,39 +24,41 @@ export default function SidebarNavigation() {
   ];
 
   useEffect(() => {
-    const fetchAdminName = async (uid) => {
-      if (!uid) return; // Exit if UID is not available
+    const fetchAdminName = async (aid) => {
+        if (!aid) return; // Exit if AID is not available
 
-      try {
-        const userDocRef = doc(db, "users", uid);
-        const userDoc = await getDoc(userDocRef);
+        try {
+            const adminDocRef = doc(db, "admins", aid); // Using "admins" collection
+            const adminDoc = await getDoc(adminDocRef);
 
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          console.log("User Data from Firestore:", userData);
+            if (adminDoc.exists()) {
+                const adminData = adminDoc.data();
+                console.log("Admin Data from Firestore:", adminData);
 
-          // Set admin name safely with fallback values
-          setAdminName(`${userData.firstname || "User"} ${userData.lastname || ""}`.trim());
-        } else {
-          console.log("User document does not exist in Firestore.");
+                // Set admin name directly from Firestore
+                setAdminName(adminData.fullName || "Admin");
+            } else {
+                console.log("Admin document does not exist in Firestore.");
+            }
+        } catch (error) {
+            console.error("Error fetching admin data:", error);
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
     };
 
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("Authenticated User:", user);
-        fetchAdminName(user.uid);
-      } else {
-        console.log("No authenticated user found.");
-      }
+        if (user) {
+            console.log("Authenticated Admin:", user);
+            fetchAdminName(user.uid); // Pass user UID as AID
+        } else {
+            console.log("No authenticated admin found.");
+        }
     });
 
-    return () => unsubscribe(); // Cleanup the listener
-  }, []);
+    return () => unsubscribe(); // Cleanup listener on unmount
+}, []);
+
+
 
   useEffect(() => {
     const currentHour = new Date().getHours();

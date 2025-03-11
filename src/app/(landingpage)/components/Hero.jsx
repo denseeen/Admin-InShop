@@ -9,7 +9,7 @@ import {
 import { auth, db } from "./../../../../script/firebaseConfig"; // Import Firestore
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { doc, setDoc } from "firebase/firestore"; // Firestore functions
+import { doc, getDoc, setDoc } from "firebase/firestore"; // Firestore functions
 
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -32,25 +32,32 @@ export default function AuthForm() {
   
     try {
       if (isSignUp) {
-        // Sign-up process
         const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
         const user = userCredential.user;
+        const aid = user.uid;
   
-        // Store user data in Firestore
-        await setDoc(doc(db, "users", user.uid), {
+        await setDoc(doc(db, "admins", aid), {
           fullName: formData.fullName,
           email: formData.email,
-          createdAt: new Date(),
+          aid: aid,
         });
       } else {
-        // Sign-in process
-        await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        const user = userCredential.user;
+  
+        // Check if user exists in "admins" collection
+        const userDoc = await getDoc(doc(db, "admins", user.uid));
+        if (!userDoc.exists()) {
+          setError("You are not authorized to log in.");
+          return;
+        }
       }
-      router.push("/main"); // Redirect after successful login
+      router.push("/main");
     } catch (err) {
       setError(err.message);
     }
-  };  
+  };
+    
   
 
   return (

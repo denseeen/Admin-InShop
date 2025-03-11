@@ -11,16 +11,16 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        console.log("User ID:", user.uid);
+    const unsubscribe = onAuthStateChanged(auth, async (admin) => {
+      if (admin) {
+        console.log("Admin ID:", admin.uid);
         try {
-          const userRef = doc(db, "users", user.uid);
-          const userSnap = await getDoc(userRef);
+          const adminRef = doc(db, "admins", admin.uid); // Fetch from admins table
+          const adminSnap = await getDoc(adminRef);
 
-          if (userSnap.exists()) {
-            console.log("User data:", userSnap.data());
-            setProfile(userSnap.data());
+          if (adminSnap.exists()) {
+            console.log("Admin data:", adminSnap.data());
+            setProfile(adminSnap.data());
           } else {
             console.log("No such document!");
           }
@@ -28,7 +28,7 @@ const Profile = () => {
           console.error("Error fetching profile:", error);
         }
       } else {
-        console.log("No user logged in.");
+        console.log("No admin logged in.");
       }
       setLoading(false);
     });
@@ -39,27 +39,18 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-white relative overflow-hidden">
-        {/* Moving Dotted Line */}
         <motion.div
-          animate={{ x: ["100%", "-100%"] }} // Moves from right to left
+          animate={{ x: ["100%", "-100%"] }} 
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="absolute top-1/2 w-full h-1 bg-gradient-to-r from-transparent via-gray-400 to-transparent bg-[length:20px_1px] bg-repeat-x"
         />
 
-        {/* Bouncing Ball Animation */}
         <motion.div
-          animate={{
-            y: [0, -50, 0], // Bouncing effect
-          }}
-          transition={{
-            duration: 0.6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          animate={{ y: [0, -50, 0] }}
+          transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
           className="w-10 h-10 bg-blue-500 rounded-full relative z-10"
         />
 
-        {/* Surface */}
         <div className="w-24 h-2 bg-gray-700 rounded-md mt-2 shadow-md relative z-10" />
       </div>
     );
@@ -95,10 +86,8 @@ const Profile = () => {
           transition={{ duration: 0.4, ease: "easeOut", delay: 0.5 }}
           className="text-left space-y-3"
         >
-          <p><strong>Name:</strong> {profile.firstname} {profile.lastname}</p>
+          <p><strong>Name:</strong> {profile.fullName}</p>
           <p><strong>Email:</strong> {profile.email}</p>
-          <p><strong>Address:</strong> {profile.address}</p>
-          <p><strong>Contact:</strong> {profile.contact}</p>
         </motion.div>
       </motion.div>
     </motion.div>
