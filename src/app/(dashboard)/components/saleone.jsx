@@ -33,7 +33,7 @@ const Saleone = () => {
 
             if (status === "pending") {
               pendingOrders++;
-            } else if (status === "completed") {
+            } else if (status === "complete") {
               completedOrders++;
             }
           });
