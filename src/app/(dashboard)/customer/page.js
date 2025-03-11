@@ -1,115 +1,67 @@
 "use client";
-import React, { useState } from "react";
-import {
-  Menu,
-  X,
-  Box,
-  Users,
-  Package,
-  Edit,
-  Trash,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { db } from "./../../../../script/firebaseConfig"; // Ensure this path is correct
+import { collection, getDocs } from "firebase/firestore";
 
-// Custom Button Component
-const Button = ({ children, variant = "default", size = "md", onClick }) => {
-  const baseStyles = "px-4 py-2 rounded font-semibold focus:outline-none";
-  const variants = {
-    default: "bg-blue-500 text-white hover:bg-blue-600",
-    outline: "border border-gray-400 text-gray-700 hover:bg-gray-200",
-    destructive: "bg-red-500 text-white hover:bg-red-600",
-  };
-  return (
-    <button className={`${baseStyles} ${variants[variant]}`} onClick={onClick}>
-      {children}
-    </button>
-  );
-};
+export default function UsersList() {
+  const [users, setUsers] = useState([]);
 
-// Custom Dialog Components
-const Dialog = ({ open, onOpenChange, children }) => {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
-        {children}
-      </div>
-    </div>
-  );
-};
-const DialogContent = ({ children }) => <div>{children}</div>;
-const DialogHeader = ({ children }) => <div className="mb-4 font-bold">{children}</div>;
-const DialogTitle = ({ children }) => <h2 className="text-lg">{children}</h2>;
-const DialogClose = ({ onClick }) => (
-  <button className="absolute top-2 right-2 text-gray-500" onClick={onClick}>
-    <X className="w-6 h-6" />
-  </button>
-);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const userData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          name: `${doc.data().lastname || "No Last Name"}, ${doc.data().firstname || "No First Name"}`,
+          address: doc.data().address || "No Address",
+          contact: doc.data().contact || "No Contact",
+          email: doc.data().email || "No Email",
+        }));
 
-export default function Customers() {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+        setUsers(userData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
 
-  const [customers, setCustomers] = useState([
-    { id: 1, name: "Alice Smith", transaction: "5 Orders" },
-    { id: 2, name: "Bob Johnson", transaction: "2 Orders" },
-  ]);
+    fetchUsers();
+  }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100 text-black">
-     
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        
-        <main className="p-6 flex-1 overflow-auto">
-          <h2 className="text-lg font-semibold mb-4">Customer List</h2>
-          <table className="min-w-full bg-white border border-gray-200 shadow-md rounded-lg">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Transaction History</th>
-                <th className="px-4 py-2">Actions</th>
+    <div className="p-6 pt-72">
+      <h2 className="text-xl font-semibold mb-4 text-center">Customer List</h2>
+      {users.length === 0 ? (
+        <p>No users found.</p>
+      ) : (
+        <table className="min-w-full bg-white border border-gray-300 shadow-md rounded-lg">
+          <thead>
+            <tr className="bg-gray-200 border border-gray-300">
+              <th className="px-4 py-2 border border-gray-300">Names</th>
+              <th className="px-4 py-2 border border-gray-300">Address</th>
+              <th className="px-4 py-2 border border-gray-300">Contact No</th>
+              <th className="px-4 py-2 border border-gray-300">Email</th>
+              <th className="px-4 py-2 border border-gray-300">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id} className="border border-gray-300">
+                <td className="px-4 py-2 border border-gray-300">{user.name}</td>
+                <td className="px-4 py-2 border border-gray-300">{user.address}</td>
+                <td className="px-4 py-2 border border-gray-300">{user.contact}</td>
+                <td className="px-4 py-2 border border-gray-300">{user.email}</td>
+                <td className="px-4 py-2 border border-gray-300 text-center">
+                  <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2">
+                    Edit
+                  </button>
+                  <button className="bg-red-500 text-white px-3 py-1 rounded">
+                    Delete
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {customers.map((customer) => (
-                <tr key={customer.id}>
-                  <td className="px-4 py-2">{customer.name}</td>
-                  <td className="px-4 py-2">
-                    <Button variant="outline" size="sm" onClick={() => { setSelectedCustomer(customer); setTransactionModalOpen(true); }}>
-                      View
-                    </Button>
-                  </td>
-                  <td className="px-4 py-2 flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm">
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </main>
-      </div>
-      {/* Transaction History Modal */}
-      {selectedCustomer && (
-        <Dialog open={isTransactionModalOpen} onOpenChange={setTransactionModalOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{selectedCustomer.name}'s Transaction History</DialogTitle>
-              <DialogClose onClick={() => setTransactionModalOpen(false)} />
-            </DialogHeader>
-            <div className="p-4">
-              <p>All transaction details for {selectedCustomer.name} will be displayed here.</p>
-              <div className="flex justify-end mt-4">
-                <Button variant="outline" onClick={() => setTransactionModalOpen(false)}>Close</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );

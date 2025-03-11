@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./../../../../script/firebaseConfig";
+import { 
+  onAuthStateChanged, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword 
+} from "firebase/auth";
+import { auth, db } from "./../../../../script/firebaseConfig"; // Import Firestore
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { doc, setDoc } from "firebase/firestore"; // Firestore functions
 
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -17,15 +22,6 @@ export default function AuthForm() {
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  // useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
-  //     if (user) {
-  //       router.push("/main"); // Redirect after successful login
-  //     }
-  //   });
-  //   return () => unsubscribe();
-  // }, [router]);
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -33,11 +29,19 @@ export default function AuthForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-
+  
     try {
       if (isSignUp) {
         // Sign-up process
-        await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        const user = userCredential.user;
+  
+        // Store user data in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          fullName: formData.fullName,
+          email: formData.email,
+          createdAt: new Date(),
+        });
       } else {
         // Sign-in process
         await signInWithEmailAndPassword(auth, formData.email, formData.password);
@@ -46,7 +50,8 @@ export default function AuthForm() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  };  
+  
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-200 overflow-hidden pt-0">
