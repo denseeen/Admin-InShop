@@ -51,7 +51,9 @@ const Profile = () => {
           className="w-10 h-10 bg-blue-500 rounded-full relative z-10"
         />
 
-        <div className="w-24 h-2 bg-gray-700 rounded-md mt-2 shadow-md relative z-10" />
+       {/* Surface */}
+         <div className="w-24 h-2 bg-gray-700 rounded-md mt-2 shadow-md relative z-10" />
+        <p className="mt-2 text-gray-700 font-semibold text-lg">Loading...</p>
       </div>
     );
   }

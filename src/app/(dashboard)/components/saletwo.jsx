@@ -1,23 +1,52 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { db } from "./../../../../script/firebaseConfig";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 const Saletwo = () => {
-  const [rows, setRows] = useState([
-    { startDate: "", endDate: "", totalRevenue: "" },
-  ]);
+  const [rows, setRows] = useState([{ startDate: "", endDate: "", totalRevenue: "" }]);
+  const [products, setProducts] = useState([]);
 
-  const products = [
-    { name: "Product A", quantity: 10 },
-    { name: "Product B", quantity: 5 },
-    { name: "Product C", quantity: 8 },
-    { name: "Product D", quantity: 12 },
-    { name: "Product E", quantity: 7 },
-    { name: "Product F", quantity: 6 },
-    { name: "Product G", quantity: 9 },
-    { name: "Product H", quantity: 4 },
-    { name: "Product I", quantity: 11 },
-    { name: "Product J", quantity: 15 },
-  ];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        const userIds = usersSnapshot.docs.map((doc) => doc.id);
+        let productMap = new Map();
+
+        // Fetch all shipping status collections in parallel
+        const shippingStatusPromises = userIds.map((userId) => {
+          const shippingStatusRef = collection(db, `users/${userId}/shippingstatus`);
+          return getDocs(query(shippingStatusRef, where("status", "==", "Complete")));
+        });
+
+        const shippingStatusSnapshots = await Promise.all(shippingStatusPromises);
+
+        shippingStatusSnapshots.forEach((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const productName = data.productName;
+            const productQuantity = data.productQuantity;
+
+            if (productMap.has(productName)) {
+              productMap.set(productName, productMap.get(productName) + productQuantity);
+            } else {
+              productMap.set(productName, productQuantity);
+            }
+          });
+        });
+
+        // Convert Map to an array
+        const consolidatedProducts = Array.from(productMap, ([name, quantity]) => ({ name, quantity }));
+        setProducts(consolidatedProducts);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleChange = (index, field, value) => {
     const updatedRows = [...rows];
@@ -107,7 +136,7 @@ const Saletwo = () => {
             ))}
           </tbody>
         </table>
-        
+
         {/* Display Total Revenue Centered Below Date Inputs */}
         <div className="mt-6 text-center text-lg font-semibold">
           Total Revenue: ₱{rows[0].totalRevenue || "0.00"}

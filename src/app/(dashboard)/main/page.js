@@ -102,7 +102,7 @@ export default function Products() {
   return (
     <div className="text-black flex flex-col items-center p-6 mt-80 bg-white w-full">
       {/* Welcome Back Message */}
-      <div>
+      <div className="w-[1000]">
   <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
   <h1 className="text-2xl ml-5.5 top-2.5 font-bold mb-4 mt-5">Welcome back, Admin!</h1>
 
