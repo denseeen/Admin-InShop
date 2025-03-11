@@ -4,12 +4,16 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Menu, X, User, LogOut, Settings, Moon, Sun } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { auth, db } from "./../../../../script/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth"; // Import Firebase Auth listener
 
 export default function SidebarNavigation() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [greeting, setGreeting] = useState("");
+  const [adminName, setAdminName] = useState("Admin"); // Default value
   const router = useRouter();
   const dropdownRef = useRef(null);
 
@@ -19,7 +23,40 @@ export default function SidebarNavigation() {
     { name: "Customers", path: "/customer" },
   ];
 
-  const adminName = "Admin Name"; // Replace with actual admin name fetching logic
+  useEffect(() => {
+    const fetchAdminName = async (uid) => {
+      if (!uid) return; // Exit if UID is not available
+
+      try {
+        const userDocRef = doc(db, "users", uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log("User Data from Firestore:", userData);
+
+          // Set admin name safely with fallback values
+          setAdminName(`${userData.firstname || "User"} ${userData.lastname || ""}`.trim());
+        } else {
+          console.log("User document does not exist in Firestore.");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Authenticated User:", user);
+        fetchAdminName(user.uid);
+      } else {
+        console.log("No authenticated user found.");
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup the listener
+  }, []);
 
   useEffect(() => {
     const currentHour = new Date().getHours();
@@ -28,10 +65,9 @@ export default function SidebarNavigation() {
     } else if (currentHour >= 12 && currentHour < 18) {
       setGreeting("Good Afternoon!");
     } else {
-      setGreeting("Good Evening");
+      setGreeting("Good Evening!");
     }
 
-    // Load dark mode preference from localStorage
     const savedTheme = localStorage.getItem("darkMode") === "true";
     setIsDarkMode(savedTheme);
     if (savedTheme) {
@@ -39,7 +75,6 @@ export default function SidebarNavigation() {
     }
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -53,7 +88,6 @@ export default function SidebarNavigation() {
     };
   }, []);
 
-  // Toggle Dark Mode
   const toggleDarkMode = () => {
     const newTheme = !isDarkMode;
     setIsDarkMode(newTheme);
@@ -63,51 +97,29 @@ export default function SidebarNavigation() {
 
   return (
     <div className={`relative h-screen overflow-hidden z-10 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
-      {/* Navbar */}
       <nav className={`p-4 shadow-md w-full fixed top-0 z-50 h-16 flex justify-between items-center px-6 ${isDarkMode ? "bg-gray-800" : "bg-blue-500"}`}>
-        {/* Sidebar Toggle */}
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="text-2xl p-2 rounded-md shadow-md"
-        >
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-2xl p-2 rounded-md shadow-md">
           {isSidebarOpen ? <X /> : <Menu />}
         </button>
 
-        {/* Admin Profile Section */}
         <div className="relative flex items-center space-x-4">
-          {/* Greeting */}
           <div className="whitespace-nowrap">{`${greeting}, ${adminName}`}</div>
 
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full transition-colors"
-          >
+          <button onClick={toggleDarkMode} className="p-2 rounded-full transition-colors">
             {isDarkMode ? <Sun className="w-6 h-6 text-yellow-400" /> : <Moon className="w-6 h-6 text-gray-200" />}
           </button>
 
-          {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-600"
-            >
+            <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-600">
               <User className="w-6 h-6" />
             </button>
 
-            {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div className={`absolute right-0 top-full mt-2 w-48 shadow-md rounded-md py-2 ${isDarkMode ? "bg-gray-700 text-white" : "bg-white text-black"}`}>
-                <button
-                  onClick={() => router.push("/settings")}
-                  className="flex items-center w-full px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
+                <button onClick={() => router.push("/profile")} className="flex items-center w-full px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600">
                   <Settings className="w-5 h-5 mr-2" /> Settings
                 </button>
-                <button
-                  onClick={() => router.push("/logout")}
-                  className="flex items-center w-full px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
+                <button onClick={() => router.push("/")} className="flex items-center w-full px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600">
                   <LogOut className="w-5 h-5 mr-2" /> Logout
                 </button>
               </div>
@@ -116,7 +128,6 @@ export default function SidebarNavigation() {
         </div>
       </nav>
 
-      {/* Sidebar Navigation */}
       <motion.aside
         initial={{ x: -250 }}
         animate={{ x: isSidebarOpen ? 0 : -250 }}
@@ -125,14 +136,7 @@ export default function SidebarNavigation() {
       >
         <ul className="mt-16 space-y-4">
           {categories.map((category, index) => (
-            <li
-              key={index}
-              className="p-2 hover:bg-blue-600 hover:text-white rounded-md cursor-pointer"
-              onClick={() => {
-                setIsSidebarOpen(false);
-                router.push(category.path);
-              }}
-            >
+            <li key={index} className="p-2 hover:bg-blue-600 hover:text-white rounded-md cursor-pointer" onClick={() => { setIsSidebarOpen(false); router.push(category.path); }}>
               {category.name}
             </li>
           ))}
