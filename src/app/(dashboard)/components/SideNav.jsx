@@ -21,6 +21,7 @@ export default function SidebarNavigation() {
     { name: "Products", path: "/main" },
     { name: "Orders", path: "/orders" },
     { name: "Customers", path: "/customer" },
+    { name: "Transaction History", path: "/transaction" },
   ];
 
   useEffect(() => {
